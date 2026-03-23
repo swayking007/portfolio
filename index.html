@@ -4,411 +4,728 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cosmic Portfolio — Developer</title>
-    <meta name="description"
-        content="A futuristic, space-themed personal developer portfolio — an immersive visual journey through code and the cosmos.">
+    <title>Welcome — Swayam's Portfolio</title>
+    <meta name="description" content="An immersive cinematic entry to Swayam Sahu's developer portfolio.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <style>
+        /* ── Reset ── */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+            background: #050510;
+            color: #e8e8ff;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* ── Particle Canvas ── */
+        #dustCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* ── Light Overlay ── */
+        .light-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            background: radial-gradient(ellipse 600px 700px at var(--lx, 50%) var(--ly, 28%),
+                    rgba(255, 210, 100, 0.18) 0%,
+                    rgba(255, 180, 60, 0.08) 30%,
+                    rgba(255, 140, 30, 0.03) 55%,
+                    transparent 80%);
+        }
+
+        .light-overlay.on {
+            opacity: 1;
+        }
+
+        /* ── Scene ── */
+        .scene {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        /* ── Lamp Assembly ── */
+        .lamp-assembly {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 0;
+            transform-origin: top center;
+            transition: transform 0.1s linear;
+        }
+
+        /* Ceiling mount */
+        .ceiling-mount {
+            width: 60px;
+            height: 8px;
+            background: linear-gradient(180deg, #3a3a4a, #252535);
+            border-radius: 0 0 6px 6px;
+            position: relative;
+            z-index: 5;
+        }
+
+        /* Cord */
+        .lamp-cord {
+            width: 2px;
+            height: clamp(120px, 22vh, 200px);
+            background: linear-gradient(180deg, #555568, #44445a);
+            position: relative;
+            z-index: 4;
+        }
+
+        /* Lamp head (shade + bulb) */
+        .lamp-head {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 5;
+        }
+
+        /* Shade — trapezoid */
+        .lamp-shade {
+            width: 100px;
+            height: 50px;
+            background: linear-gradient(180deg, #2a2a3d, #1e1e30);
+            clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+            position: relative;
+            border-bottom: 2px solid rgba(255, 200, 80, 0.05);
+            z-index: 5;
+        }
+
+        /* Bulb */
+        .bulb-container {
+            position: relative;
+            margin-top: -4px;
+            z-index: 4;
+        }
+
+        .bulb {
+            width: 28px;
+            height: 36px;
+            background: radial-gradient(circle at 50% 40%, #3a3a50, #252538);
+            border-radius: 50% 50% 45% 45%;
+            transition: background 1s ease, box-shadow 1s ease;
+            position: relative;
+        }
+
+        .bulb.on {
+            background: radial-gradient(circle at 50% 40%, #fff8e1, #ffe082, #ffcc40);
+            box-shadow:
+                0 0 20px rgba(255, 200, 80, 0.6),
+                0 0 60px rgba(255, 180, 60, 0.35),
+                0 0 120px rgba(255, 160, 40, 0.2),
+                0 0 200px rgba(255, 140, 20, 0.1);
+        }
+
+        /* Filament */
+        .filament {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 14px;
+            border: 1.5px solid rgba(180, 160, 120, 0.3);
+            border-top: none;
+            border-radius: 0 0 50% 50%;
+            transition: border-color 0.8s ease;
+        }
+
+        .bulb.on .filament {
+            border-color: rgba(255, 240, 180, 0.9);
+            box-shadow: 0 0 6px rgba(255, 220, 100, 0.5);
+        }
+
+        /* Light cone below the bulb */
+        .light-cone {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 120px solid transparent;
+            border-right: 120px solid transparent;
+            border-top: 350px solid rgba(255, 210, 100, 0);
+            pointer-events: none;
+            transition: border-top-color 1.5s ease;
+            filter: blur(30px);
+            opacity: 0;
+            transition: opacity 1.5s ease;
+        }
+
+        .light-cone.on {
+            opacity: 1;
+            border-top-color: rgba(255, 210, 100, 0.06);
+        }
+
+        /* ── Pull String ── */
+        .pull-string {
+            position: absolute;
+            bottom: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: grab;
+            z-index: 10;
+            transition: transform 0.3s ease;
+        }
+
+        .pull-string:active {
+            cursor: grabbing;
+        }
+
+        .pull-string:hover .string-bead {
+            box-shadow: 0 0 12px rgba(255, 200, 80, 0.4);
+            border-color: rgba(255, 200, 80, 0.6);
+        }
+
+        .pull-string:hover .string-line {
+            background: rgba(200, 190, 170, 0.6);
+        }
+
+        .string-line {
+            width: 1.5px;
+            height: 45px;
+            background: rgba(160, 150, 130, 0.4);
+            transition: background 0.3s ease;
+        }
+
+        .string-bead {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 35%, #555, #333);
+            border: 1.5px solid rgba(200, 190, 170, 0.3);
+            transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+        }
+
+        /* Pull hint label */
+        .pull-hint {
+            position: absolute;
+            bottom: -38px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.7rem;
+            font-weight: 400;
+            color: rgba(200, 195, 180, 0.35);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            animation: hintPulse 3s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes hintPulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+        }
+
+        /* ── Swing Animation ── */
+        @keyframes lampSwing {
+            0% { transform: rotate(0deg); }
+            15% { transform: rotate(4deg); }
+            30% { transform: rotate(-3deg); }
+            45% { transform: rotate(2.5deg); }
+            60% { transform: rotate(-1.5deg); }
+            75% { transform: rotate(1deg); }
+            90% { transform: rotate(-0.5deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        .lamp-assembly.swinging {
+            animation: lampSwing 1.6s ease-out forwards;
+        }
+
+        /* ── String Pull Animation ── */
+        @keyframes stringPull {
+            0% { transform: translateX(-50%) translateY(0); }
+            40% { transform: translateX(-50%) translateY(18px); }
+            100% { transform: translateX(-50%) translateY(0); }
+        }
+
+        .pull-string.pulled {
+            animation: stringPull 0.5s ease-out forwards;
+        }
+
+        /* ── Flicker Animation (for NO) ── */
+        @keyframes flicker {
+            0% { opacity: 1; }
+            10% { opacity: 0.4; }
+            20% { opacity: 0.9; }
+            30% { opacity: 0.2; }
+            40% { opacity: 0.8; }
+            50% { opacity: 0.1; }
+            60% { opacity: 0.6; }
+            70% { opacity: 0.05; }
+            80% { opacity: 0.3; }
+            100% { opacity: 0; }
+        }
+
+        /* ── Glassmorphism Card ── */
+        .prompt-card {
+            position: fixed;
+            right: 8%;
+            top: 50%;
+            transform: translateY(-50%) translateX(60px);
+            width: clamp(300px, 28vw, 420px);
+            padding: 44px 36px;
+            background: rgba(20, 20, 48, 0.45);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            box-shadow:
+                0 8px 40px rgba(0, 0, 0, 0.4),
+                0 0 80px rgba(255, 200, 80, 0.04);
+            z-index: 20;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .prompt-card.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(-50%) translateX(0);
+        }
+
+        .prompt-card h2 {
+            font-size: clamp(1.1rem, 1.8vw, 1.45rem);
+            font-weight: 600;
+            line-height: 1.5;
+            margin-bottom: 32px;
+            color: #f0ece4;
+        }
+
+        .prompt-card h2 span {
+            background: linear-gradient(135deg, #ffcc40, #ff9e40);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        .prompt-buttons {
+            display: flex;
+            gap: 16px;
+        }
+
+        .prompt-btn {
+            flex: 1;
+            padding: 14px 24px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: 0.5px;
+        }
+
+        .prompt-btn.yes {
+            background: linear-gradient(135deg, #ffcc40, #ff9e40);
+            color: #1a1a2e;
+            box-shadow: 0 0 24px rgba(255, 180, 60, 0.2);
+        }
+
+        .prompt-btn.yes:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 40px rgba(255, 180, 60, 0.4), 0 6px 20px rgba(255, 180, 60, 0.15);
+        }
+
+        .prompt-btn.no {
+            background: rgba(255, 255, 255, 0.06);
+            color: #a0a0b8;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .prompt-btn.no:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0f0;
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+
+        /* ── Transition Overlay ── */
+        .transition-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            background: radial-gradient(circle at var(--lx, 50%) var(--ly, 28%),
+                    rgba(255, 230, 160, 1) 0%,
+                    rgba(255, 210, 100, 0.9) 20%,
+                    rgba(20, 18, 40, 1) 80%);
+            transition: opacity 1.2s ease;
+        }
+
+        .transition-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* ── Ambient floor glow ── */
+        .floor-glow {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 30%;
+            background: linear-gradient(to top, rgba(255, 200, 80, 0) 0%, transparent 100%);
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+        }
+
+        .floor-glow.on {
+            opacity: 1;
+            background: linear-gradient(to top, rgba(255, 200, 80, 0.03) 0%, transparent 100%);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .prompt-card {
+                right: 50%;
+                top: auto;
+                bottom: 6%;
+                transform: translateX(50%) translateY(40px);
+                width: clamp(280px, 85vw, 400px);
+                padding: 32px 28px;
+            }
+
+            .prompt-card.visible {
+                transform: translateX(50%) translateY(0);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .lamp-shade {
+                width: 80px;
+                height: 40px;
+            }
+
+            .bulb {
+                width: 22px;
+                height: 28px;
+            }
+
+            .prompt-card {
+                padding: 28px 22px;
+            }
+
+            .prompt-card h2 {
+                font-size: 1rem;
+                margin-bottom: 24px;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-    <!-- Particle Canvas Background -->
-    <canvas id="particleCanvas"></canvas>
+    <!-- Dust Particle Canvas -->
+    <canvas id="dustCanvas"></canvas>
 
-    <!-- Ambient Gradient Overlay -->
-    <div class="ambient-glow"></div>
+    <!-- Warm Light Overlay -->
+    <div class="light-overlay" id="lightOverlay"></div>
 
-    <!-- Navigation -->
-    <nav class="navbar" id="navbar">
-        <a href="#hero" class="nav-logo">&#10026; SWAYAM SAHU</a>
-        <ul class="nav-links">
-            <li><a href="#about">About</a></li>
-            <li><a href="#techstack">Tech Stack</a></li>
-            <li><a href="#projects">Projects</a></li>
-            <li><a href="#achievements">Achievements</a></li>
-            <li><a href="#contact">Contact</a></li>
-        </ul>
-        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
-            <span></span><span></span><span></span>
-        </button>
-    </nav>
+    <!-- Floor Glow -->
+    <div class="floor-glow" id="floorGlow"></div>
 
-    <!-- Mobile Nav Overlay -->
-    <div class="mobile-nav-overlay" id="mobileNav">
-        <ul class="mobile-nav-links">
-            <li><a href="#about">About</a></li>
-            <li><a href="#techstack">Tech Stack</a></li>
-            <li><a href="#projects">Projects</a></li>
-            <li><a href="#achievements">Achievements</a></li>
-            <li><a href="#contact">Contact</a></li>
-        </ul>
+    <!-- Scene -->
+    <div class="scene">
+        <!-- Lamp Assembly -->
+        <div class="lamp-assembly" id="lampAssembly">
+            <div class="ceiling-mount"></div>
+            <div class="lamp-cord"></div>
+            <div class="lamp-head">
+                <div class="lamp-shade"></div>
+                <div class="bulb-container">
+                    <div class="bulb" id="bulb">
+                        <div class="filament"></div>
+                    </div>
+                    <div class="light-cone" id="lightCone"></div>
+                    <!-- Pull String -->
+                    <div class="pull-string" id="pullString">
+                        <div class="string-line"></div>
+                        <div class="string-bead"></div>
+                        <div class="pull-hint">pull</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- ========== HERO SECTION ========== -->
-    <section class="hero" id="hero">
-        <div class="hero-content">
-            <div class="hero-avatar">
-                <img src="Swayam1.jpeg" alt="Swayam Sahu" />
-            </div>
-            <p class="hero-tag">Welcome to My Universe !!</p>
-            <h1 class="hero-title">
-                <span class="hero-name">I'm <span class="highlight"> SWAYAM SAHU</span></span>
-            </h1>
-            <p class="hero-subtitle">Exploring Code Like the Universe</p>
-            <p class="hero-desc"> SIH'2025 Finalist · Assistant Secretary @CWC · Assistant Treasurer @ACSES </p>
-            <div class="hero-buttons">
-                <a href="#projects" class="btn btn-primary">
-                    <span>View Projects</span>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
-                </a>
-                <a href="#contact" class="btn btn-secondary">
-                    <span>Contact Me</span>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path
-                            d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
-                    </svg>
-                </a>
-            </div>
-
+    <!-- Glassmorphism Prompt Card -->
+    <div class="prompt-card" id="promptCard">
+        <h2>Are you excited to explore <span>Swayam's</span> portfolio?</h2>
+        <div class="prompt-buttons">
+            <button class="prompt-btn yes" id="btnYes">YES</button>
+            <button class="prompt-btn no" id="btnNo">NO</button>
         </div>
-    </section>
+    </div>
 
-    <!-- ========== ABOUT SECTION ========== -->
-    <section class="section" id="about">
-        <div class="container">
-            <h2 class="section-title reveal">
-                <span class="section-number">01.</span> About Me
-            </h2>
-            <div class="about-grid reveal">
-                <div class="about-text">
-                    <p>Hello! I'm a passionate developer who finds beauty in the intersection of <strong>code and
-                            creativity</strong>. Much like the vast universe, I believe technology has infinite
-                        possibilities waiting to be explored.</p>
-                    <p>I specialize in building <strong>immersive digital experiences</strong> — from sleek web
-                        applications to interactive interfaces that push the boundaries of what's possible on the web.
-                    </p>
-                    <p>When I'm not coding, you'll find me stargazing, reading about astrophysics, or experimenting with
-                        creative coding and generative art.</p>
-                    <div class="about-stats">
-                        <div class="stat">
-                            <span class="stat-number" data-target="25">0</span>+
-                            <span class="stat-label">Projects</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-number" data-target="3">0</span>+
-                            <span class="stat-label">Years Exp.</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-number" data-target="10">0</span>+
-                            <span class="stat-label">Technologies</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="about-visual">
-                    <div class="orbit-system">
-                        <div class="orbit orbit-1">
-                            <div class="orbit-dot"></div>
-                        </div>
-                        <div class="orbit orbit-2">
-                            <div class="orbit-dot"></div>
-                        </div>
-                        <div class="orbit orbit-3">
-                            <div class="orbit-dot"></div>
-                        </div>
-                        <div class="orbit-center">
-                            <span>&#128104;&#8205;&#128187;</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <!-- Transition Overlay -->
+    <div class="transition-overlay" id="transitionOverlay"></div>
 
-    <!-- ========== TECHNICAL SKILLS SECTION ========== -->
-    <section class="section" id="techstack">
-        <div class="container">
-            <h2 class="section-title reveal">
-                <span class="section-number">02.</span> Technical Skills
-            </h2>
-            <p class="section-subtitle reveal">A living galaxy of skills — hover to explore, click to expand</p>
+    <script>
+        // ── Elements ──
+        const dustCanvas = document.getElementById('dustCanvas');
+        const ctx = dustCanvas.getContext('2d');
+        const lightOverlay = document.getElementById('lightOverlay');
+        const floorGlow = document.getElementById('floorGlow');
+        const lampAssembly = document.getElementById('lampAssembly');
+        const bulb = document.getElementById('bulb');
+        const lightCone = document.getElementById('lightCone');
+        const pullString = document.getElementById('pullString');
+        const promptCard = document.getElementById('promptCard');
+        const btnYes = document.getElementById('btnYes');
+        const btnNo = document.getElementById('btnNo');
+        const transitionOverlay = document.getElementById('transitionOverlay');
 
-            <div class="skills-orbit-wrapper reveal" id="skillsOrbitWrapper">
-                <canvas id="skillsCanvas"></canvas>
-                <div class="orbit-nodes-container" id="orbitNodesContainer">
-                    <!-- Central Core -->
-                    <div class="orbit-core" id="orbitCore">
-                        <span class="core-icon">&#10026;</span>
-                        <span class="core-label">Skills</span>
-                    </div>
-                    <!-- Category nodes + sub-skill menus injected by JS -->
-                </div>
-            </div>
+        let lampOn = false;
+        let animating = false;
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
 
-            <!-- Mobile fallback: stacked cards -->
-            <div class="skills-mobile-fallback" id="skillsMobileFallback"></div>
-        </div>
-    </section>
+        // ── Resize Canvas ──
+        function resizeCanvas() {
+            dustCanvas.width = window.innerWidth;
+            dustCanvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
 
-    <!-- ========== PROJECTS SECTION ========== -->
-    <section class="section" id="projects">
-        <div class="container">
-            <h2 class="section-title reveal">
-                <span class="section-number">03.</span> Projects
-            </h2>
-            <p class="section-subtitle reveal">A selection of stellar work</p>
-            <div class="projects-grid reveal">
-                <div class="project-card" data-tilt>
-                    <div class="project-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                        <div class="project-overlay">
-                            <span class="project-tech-tag">React</span>
-                            <span class="project-tech-tag">Node.js</span>
-                            <span class="project-tech-tag">MongoDB</span>
-                        </div>
-                    </div>
-                    <div class="project-info">
-                        <h3>Nebula Dashboard</h3>
-                        <p>A real-time analytics dashboard with dynamic charts and cosmic-inspired visualizations for
-                            monitoring business metrics.</p>
-                        <div class="project-links">
-                            <a href="#" class="project-link" aria-label="View live demo">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path
-                                        d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" />
-                                </svg>
-                                Live Demo
-                            </a>
-                            <a href="#" class="project-link" aria-label="View source code">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path
-                                        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22" />
-                                </svg>
-                                Source
-                            </a>
-                        </div>
-                    </div>
-                </div>
+        // ── Dust Particles ──
+        class Dust {
+            constructor() {
+                this.reset();
+                this.y = Math.random() * dustCanvas.height;
+            }
+            reset() {
+                this.x = Math.random() * dustCanvas.width;
+                this.y = -5;
+                this.size = Math.random() * 2 + 0.5;
+                this.speedY = Math.random() * 0.3 + 0.08;
+                this.speedX = (Math.random() - 0.5) * 0.2;
+                this.opacity = Math.random() * 0.25 + 0.05;
+                this.maxOpacity = this.opacity;
+                this.drift = Math.random() * Math.PI * 2;
+                this.driftSpeed = Math.random() * 0.005 + 0.002;
+                this.parallax = Math.random() * 0.5 + 0.2;
+            }
+            update() {
+                this.y += this.speedY;
+                this.drift += this.driftSpeed;
+                this.x += this.speedX + Math.sin(this.drift) * 0.15;
 
-                <div class="project-card" data-tilt>
-                    <div class="project-image" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                        <div class="project-overlay">
-                            <span class="project-tech-tag">Python</span>
-                            <span class="project-tech-tag">TensorFlow</span>
-                            <span class="project-tech-tag">Flask</span>
-                        </div>
-                    </div>
-                    <div class="project-info">
-                        <h3>Stellar AI Engine</h3>
-                        <p>An AI-powered recommendation engine using deep learning to analyze user behavior and deliver
-                            personalized content at scale.</p>
-                        <div class="project-links">
-                            <a href="#" class="project-link" aria-label="View live demo">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path
-                                        d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" />
-                                </svg>
-                                Live Demo
-                            </a>
-                            <a href="#" class="project-link" aria-label="View source code">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path
-                                        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22" />
-                                </svg>
-                                Source
-                            </a>
-                        </div>
-                    </div>
-                </div>
+                // Parallax from mouse
+                const dx = (mouseX - dustCanvas.width / 2) / dustCanvas.width;
+                const dy = (mouseY - dustCanvas.height / 2) / dustCanvas.height;
+                this.x += dx * this.parallax * 0.3;
+                this.y += dy * this.parallax * 0.1;
 
-                <div class="project-card" data-tilt>
-                    <div class="project-image" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                        <div class="project-overlay">
-                            <span class="project-tech-tag">JavaScript</span>
-                            <span class="project-tech-tag">WebGL</span>
-                            <span class="project-tech-tag">Canvas</span>
-                        </div>
-                    </div>
-                    <div class="project-info">
-                        <h3>Cosmic Visualizer</h3>
-                        <p>An interactive WebGL-powered space simulation that renders real-time galaxy formations with
-                            procedural generation algorithms.</p>
-                        <div class="project-links">
-                            <a href="#" class="project-link" aria-label="View live demo">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path
-                                        d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" />
-                                </svg>
-                                Live Demo
-                            </a>
-                            <a href="#" class="project-link" aria-label="View source code">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path
-                                        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22" />
-                                </svg>
-                                Source
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+                if (this.y > dustCanvas.height + 10 || this.x < -20 || this.x > dustCanvas.width + 20) {
+                    this.reset();
+                }
 
-    <!-- ========== ACHIEVEMENTS SECTION ========== -->
-    <section class="section" id="achievements">
-        <div class="container">
-            <h2 class="section-title reveal">
-                <span class="section-number">04.</span> Achievements
-            </h2>
-            <p class="section-subtitle reveal">Milestones on my journey</p>
-            <div class="timeline reveal">
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-content">
-                        <span class="timeline-date">2025</span>
-                        <h3>Hackathon Winner</h3>
-                        <p>Won 1st place at a national-level hackathon by building an AI-powered sustainability tracker
-                            in 48 hours.</p>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-content">
-                        <span class="timeline-date">2024</span>
-                        <h3>Open Source Contributor</h3>
-                        <p>Contributed to major open-source projects with 300+ GitHub contributions and multiple merged
-                            pull requests.</p>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-content">
-                        <span class="timeline-date">2024</span>
-                        <h3>Dean's List — Computer Science</h3>
-                        <p>Recognized for academic excellence and awarded a scholarship for exceptional performance in
-                            advanced CS courses.</p>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-content">
-                        <span class="timeline-date">2023</span>
-                        <h3>Freelance Launch</h3>
-                        <p>Successfully delivered 10+ client projects across web development, UI/UX design, and data
-                            visualization.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+                // Glow brighter when lamp is on and particle is near the light
+                if (lampOn) {
+                    const lightX = dustCanvas.width / 2;
+                    const lightY = dustCanvas.height * 0.28;
+                    const dist = Math.hypot(this.x - lightX, this.y - lightY);
+                    const proximity = Math.max(0, 1 - dist / 500);
+                    this.opacity = this.maxOpacity + proximity * 0.35;
+                } else {
+                    this.opacity += (this.maxOpacity - this.opacity) * 0.02;
+                }
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                const color = lampOn
+                    ? `rgba(255, 220, 160, ${this.opacity})`
+                    : `rgba(180, 180, 200, ${this.opacity})`;
+                ctx.fillStyle = color;
+                ctx.fill();
+            }
+        }
 
-    <!-- ========== CONTACT SECTION ========== -->
-    <section class="section" id="contact">
-        <div class="container">
-            <h2 class="section-title reveal">
-                <span class="section-number">05.</span> Contact
-            </h2>
-            <p class="section-subtitle reveal">Let's build something amazing together</p>
-            <div class="contact-wrapper reveal">
-                <form class="contact-form" id="contactForm">
-                    <div class="form-group">
-                        <input type="text" id="name" name="name" placeholder=" " required>
-                        <label for="name">Your Name</label>
-                        <div class="form-line"></div>
-                    </div>
-                    <div class="form-group">
-                        <input type="email" id="email" name="email" placeholder=" " required>
-                        <label for="email">Your Email</label>
-                        <div class="form-line"></div>
-                    </div>
-                    <div class="form-group">
-                        <textarea id="message" name="message" rows="5" placeholder=" " required></textarea>
-                        <label for="message">Your Message</label>
-                        <div class="form-line"></div>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-submit">
-                        <span>Send Message</span>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <line x1="22" y1="2" x2="11" y2="13" />
-                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                        </svg>
-                    </button>
-                    <div class="form-success" id="formSuccess">
-                        <span>&#10024;</span> Message sent successfully! I'll get back to you soon.
-                    </div>
-                </form>
-                <div class="contact-info">
-                    <div class="contact-card">
-                        <div class="contact-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                                <polyline points="22,6 12,13 2,6" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h4>Email</h4>
-                            <p>hello@yourname.dev</p>
-                        </div>
-                    </div>
-                    <div class="contact-card">
-                        <div class="contact-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-                                <circle cx="12" cy="10" r="3" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h4>Location</h4>
-                            <p>Planet Earth &#127758;</p>
-                        </div>
-                    </div>
-                    <div class="contact-socials">
-                        <a href="#" class="social-link" aria-label="GitHub">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
-                            </svg>
-                        </a>
-                        <a href="#" class="social-link" aria-label="LinkedIn">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                            </svg>
-                        </a>
-                        <a href="#" class="social-link" aria-label="Twitter">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                            </svg>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+        const particles = [];
+        const PARTICLE_COUNT = 80;
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+            particles.push(new Dust());
+        }
 
-    <!-- Footer -->
-    <footer class="footer">
-        <p>Designed & Built with &#128156; in the Cosmos</p>
-        <p class="footer-sub">&copy; 2026 Your Name. All rights reserved.</p>
-    </footer>
+        function animateParticles() {
+            ctx.clearRect(0, 0, dustCanvas.width, dustCanvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
 
-    <script src="script.js"></script>
+        // ── Mouse Tracking (for light direction + parallax) ──
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+
+            // Shift light origin slightly based on mouse
+            const lx = 50 + ((e.clientX / window.innerWidth) - 0.5) * 8;
+            const ly = 28 + ((e.clientY / window.innerHeight) - 0.5) * 4;
+            document.documentElement.style.setProperty('--lx', lx + '%');
+            document.documentElement.style.setProperty('--ly', ly + '%');
+
+            // Subtle lamp tilt based on mouse (only when not swinging)
+            if (!lampAssembly.classList.contains('swinging')) {
+                const tilt = ((e.clientX / window.innerWidth) - 0.5) * 2;
+                lampAssembly.style.transform = `rotate(${tilt}deg)`;
+            }
+        });
+
+        // ── Pull String Interaction ──
+        pullString.addEventListener('click', () => {
+            if (animating) return;
+            animating = true;
+
+            // Animate string pull
+            pullString.classList.add('pulled');
+
+            // Swing the lamp
+            lampAssembly.classList.remove('swinging');
+            void lampAssembly.offsetWidth; // reflow
+            lampAssembly.classList.add('swinging');
+
+            setTimeout(() => {
+                pullString.classList.remove('pulled');
+            }, 500);
+
+            if (!lampOn) {
+                turnOn();
+            } else {
+                turnOff();
+            }
+
+            setTimeout(() => {
+                lampAssembly.classList.remove('swinging');
+                animating = false;
+            }, 1600);
+        });
+
+        function turnOn() {
+            lampOn = true;
+            bulb.classList.add('on');
+            lightCone.classList.add('on');
+            lightOverlay.classList.add('on');
+            floorGlow.classList.add('on');
+
+            // Show prompt card after a delay
+            setTimeout(() => {
+                promptCard.classList.add('visible');
+            }, 1200);
+        }
+
+        function turnOff(doFlicker = false) {
+            lampOn = false;
+            promptCard.classList.remove('visible');
+
+            if (doFlicker) {
+                // Flicker effect
+                lightOverlay.style.animation = 'flicker 0.8s ease-out forwards';
+                bulb.style.animation = 'flicker 0.8s ease-out forwards';
+                lightCone.style.animation = 'flicker 0.8s ease-out forwards';
+
+                setTimeout(() => {
+                    bulb.classList.remove('on');
+                    lightCone.classList.remove('on');
+                    lightOverlay.classList.remove('on');
+                    floorGlow.classList.remove('on');
+
+                    // Reset animations
+                    lightOverlay.style.animation = '';
+                    bulb.style.animation = '';
+                    lightCone.style.animation = '';
+                }, 800);
+            } else {
+                bulb.classList.remove('on');
+                lightCone.classList.remove('on');
+                lightOverlay.classList.remove('on');
+                floorGlow.classList.remove('on');
+            }
+        }
+
+        // ── YES Button ──
+        btnYes.addEventListener('click', () => {
+            transitionOverlay.classList.add('active');
+            setTimeout(() => {
+                window.location.href = 'home.html';
+            }, 1200);
+        });
+
+        // ── NO Button ──
+        btnNo.addEventListener('click', () => {
+            if (animating) return;
+            animating = true;
+
+            // Swing
+            lampAssembly.classList.remove('swinging');
+            void lampAssembly.offsetWidth;
+            lampAssembly.classList.add('swinging');
+
+            turnOff(true);
+
+            setTimeout(() => {
+                lampAssembly.classList.remove('swinging');
+                animating = false;
+            }, 1600);
+        });
+    </script>
+
 </body>
 
 </html>
